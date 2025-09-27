@@ -7,7 +7,8 @@ namespace MottuProjeto.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Moto> Motos { get; set; }
-        public DbSet<Area> Areas { get; set; }
+        public DbSet<Moto> Motos { get; set; } = default!;
+        public DbSet<Area> Areas { get; set; } = default!;
+        public DbSet<Usuario> Usuarios { get; set; } = default!;
     }
 }

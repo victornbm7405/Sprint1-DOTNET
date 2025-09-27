@@ -12,11 +12,13 @@ namespace MottuProjeto.Models
 
         [Required]
         [Column("DS_PLACA")]
-        public string Placa { get; set; }
+        [StringLength(20)]
+        public string Placa { get; set; } = string.Empty;
 
         [Required]
         [Column("NM_MODELO")]
-        public string Modelo { get; set; }
+        [StringLength(100)]
+        public string Modelo { get; set; } = string.Empty;
 
         [Required]
         [Column("ID_AREA")]
