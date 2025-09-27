@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Models;
@@ -7,6 +8,7 @@ namespace MottuProjeto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+[Authorize]
     public class AreasController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -31,3 +33,4 @@ namespace MottuProjeto.Controllers
         }
     }
 }
+

@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Data;
@@ -8,6 +9,7 @@ namespace MottuProjeto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+[Authorize]
     public class MotosController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -73,3 +75,4 @@ namespace MottuProjeto.Controllers
         }
     }
 }
+
