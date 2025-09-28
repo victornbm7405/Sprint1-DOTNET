@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Data;
@@ -11,36 +11,57 @@ using MottuProjeto.Models;
 namespace MottuProjeto.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _ctx;
-        public AuthController(AppDbContext ctx) => _ctx = ctx;
+        private readonly AppDbContext _context;
 
-        // POST /api/auth/login
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDTO req)
+        public AuthController(AppDbContext context)
         {
-            var user = await _ctx.Usuarios.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Username == req.Username);
+            _context = context;
+        }
 
-            if (user is null)
+        /// <summary>Realiza login via cookie (sessão).</summary>
+        /// <remarks>
+        /// Envie <c>username</c> e <c>password</c>.  
+        /// No momento, a senha é comparada como texto puro (use hash em produção).
+        ///
+        /// Exemplo:
+        /// 
+        /// {
+        ///   "username": "admin",
+        ///   "password": "admin123"
+        /// }
+        /// </remarks>
+        /// <param name="dto">Credenciais do usuário.</param>
+        /// <response code="200">Login efetuado com sucesso.</response>
+        /// <response code="400">Payload inválido.</response>
+        /// <response code="401">Credenciais inválidas.</response>
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            var user = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == dto.Username);
+
+            if (user is null || user.PasswordHash != dto.Password)
                 return Unauthorized(new { message = "Usuário ou senha inválidos." });
 
-            // SIMPLIFICADO: comparando campo PasswordHash como se fosse senha em texto.
-            // Troque para BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash) quando salvar hash.
-            var ok = user.PasswordHash == req.Password;
-            if (!ok)
-                return Unauthorized(new { message = "Usuário ou senha inválidos." });
-
+            // Cria as claims do usuário autenticado
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var identity = new ClaimsIdentity(
+                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(
@@ -48,34 +69,44 @@ namespace MottuProjeto.Controllers
                 principal,
                 new AuthenticationProperties
                 {
-                    IsPersistent = true,
+                    IsPersistent = true, // mantém a sessão até expirar
                     ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
                 });
 
-            return Ok(new { message = "Login ok", username = user.Username, role = user.Role });
+            return Ok(new
+            {
+                message = "Login efetuado.",
+                user = new { user.Id, user.Nome, user.Username, user.Email, user.Role }
+            });
         }
 
-        // POST /api/auth/logout
-        [Authorize]
+        /// <summary>Encerra a sessão do usuário (logout).</summary>
+        /// <response code="204">Logout realizado.</response>
         [HttpPost("logout")]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return Ok(new { message = "Logout ok" });
+            return NoContent();
         }
 
-        // GET /api/auth/me
-        [Authorize]
+        /// <summary>Retorna as informações básicas do usuário autenticado.</summary>
+        /// <response code="200">Informações do usuário.</response>
+        /// <response code="401">Não autenticado.</response>
         [HttpGet("me")]
+        [Authorize]
         public IActionResult Me()
         {
             return Ok(new
             {
                 user = User.Identity?.Name,
-                role = User.FindFirstValue(ClaimTypes.Role)
+                email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value,
+                role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value
             });
         }
 
+        /// <summary>Endpoint de acesso negado (usado pela autenticação).</summary>
+        /// <response code="403">Acesso negado.</response>
         [HttpGet("denied")]
         public IActionResult Denied() => Forbid();
     }

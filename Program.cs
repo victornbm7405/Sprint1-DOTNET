@@ -6,18 +6,32 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;             // UseOracle
 using MottuProjeto.Data;                         // AppDbContext
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
 
-// Swagger
+// Swagger + XML comments
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MottuProjeto API",
+        Version = "v1",
+        Description = "API de gestão de usuários, motos e áreas (Sprint 3)."
+    });
 
-// DbContext (Oracle)
-// Connection string lida de ConnectionStrings:Default (appsettings*.json) ou variáveis de ambiente
+    // Lê os comentários XML gerados pelo .csproj para descrever endpoints, params e models
+    var xml = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xml);
+    if (File.Exists(xmlPath))
+        c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
+
+// DbContext (Oracle) — Connection string via appsettings ou env ORACLE_CONN
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
     var conn = builder.Configuration.GetConnectionString("Default")
@@ -48,13 +62,12 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger SEMPRE habilitado (independente do ambiente)
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// Opcional: comente se não tiver HTTPS configurado para evitar warning
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -74,7 +87,7 @@ using (var scope = app.Services.CreateScope())
                 Nome = "Administrador",
                 Email = "admin@example.com",
                 Username = "admin",
-                PasswordHash = "admin123", // ⚠️ TROQUE para hash (BCrypt) e ajuste a verificação no login
+                PasswordHash = "admin123", // ⚠️ Em produção, salvar HASH (ex.: BCrypt) e ajustar verificação no login
                 Role = "Admin"
             });
             ctx.SaveChanges();

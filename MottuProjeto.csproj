@@ -3,9 +3,20 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<!-- Evita o AppHost nativo que o Avast costuma bloquear -->
+
+		<!-- Evita o AppHost nativo que antivírus costuma bloquear -->
 		<UseAppHost>false</UseAppHost>
+
+		<!-- Swagger: gerar comentários XML -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- Silencia avisos de falta de XML docs em APIs públicas -->
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
+
+	<!-- NÃO compilar arquivos do projeto de testes dentro do projeto Web -->
+	<ItemGroup>
+		<Compile Remove="MottuProjeto.Tests\**\*.cs" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11" />
