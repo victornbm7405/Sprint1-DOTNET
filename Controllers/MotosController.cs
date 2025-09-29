@@ -1,4 +1,3 @@
-Ôªøusing Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Data;
@@ -9,16 +8,15 @@ namespace MottuProjeto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class MotosController : ControllerBase
     {
         private readonly AppDbContext _context;
         public MotosController(AppDbContext context) => _context = context;
 
-        /// <summary>Lista paginada de motos (com links de navega√ß√£o).</summary>
-        /// <param name="page">P√°gina (&gt;=1).</param>
-        /// <param name="pageSize">Itens por p√°gina (1‚Äì100).</param>
-        /// <response code="200">Retorna a p√°gina solicitada.</response>
+        /// <summary>Lista paginada de motos (com links de navegaÁ„o).</summary>
+        /// <param name="page">P·gina (&gt;=1).</param>
+        /// <param name="pageSize">Itens por p·gina (1ñ100).</param>
+        /// <response code="200">Retorna a p·gina solicitada.</response>
         [HttpGet]
         public async Task<ActionResult<object>> Listar([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -36,10 +34,10 @@ namespace MottuProjeto.Controllers
             return Ok(new { total, page, pageSize, _links = new { self, next, prev }, items });
         }
 
-        /// <summary>Obt√©m uma moto (HATEOAS: self, update, delete).</summary>
+        /// <summary>ObtÈm uma moto (HATEOAS: self, update, delete).</summary>
         /// <param name="id">Identificador da moto.</param>
         /// <response code="200">Moto encontrada.</response>
-        /// <response code="404">Moto n√£o encontrada.</response>
+        /// <response code="404">Moto n„o encontrada.</response>
         [HttpGet("{id:int}")]
         public async Task<ActionResult<object>> Obter(int id)
         {
@@ -60,7 +58,7 @@ namespace MottuProjeto.Controllers
         /// }
         /// </remarks>
         /// <response code="201">Moto criada com sucesso.</response>
-        /// <response code="400">Dados inv√°lidos.</response>
+        /// <response code="400">Dados inv·lidos.</response>
         [HttpPost]
         public async Task<ActionResult<object>> Criar([FromBody] Moto moto)
         {
@@ -86,8 +84,8 @@ namespace MottuProjeto.Controllers
         /// }
         /// </remarks>
         /// <response code="200">Moto atualizada (envelope HATEOAS).</response>
-        /// <response code="400">Ids divergentes ou dados inv√°lidos.</response>
-        /// <response code="404">Moto n√£o encontrada.</response>
+        /// <response code="400">Ids divergentes ou dados inv·lidos.</response>
+        /// <response code="404">Moto n„o encontrada.</response>
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Atualizar(int id, [FromBody] Moto moto)
         {
@@ -104,10 +102,10 @@ namespace MottuProjeto.Controllers
             return Ok(envelope);
         }
 
-        /// <summary>Exclui uma moto (HATEOAS: link para cole√ß√£o e cria√ß√£o).</summary>
+        /// <summary>Exclui uma moto (HATEOAS: link para coleÁ„o e criaÁ„o).</summary>
         /// <param name="id">Identificador da moto.</param>
-        /// <response code="200">Confirma exclus√£o com links para cole√ß√£o/cria√ß√£o.</response>
-        /// <response code="404">Moto n√£o encontrada.</response>
+        /// <response code="200">Confirma exclus„o com links para coleÁ„o/criaÁ„o.</response>
+        /// <response code="404">Moto n„o encontrada.</response>
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -119,7 +117,7 @@ namespace MottuProjeto.Controllers
 
             var collection = Url.Action(nameof(Listar), new { page = 1, pageSize = 10 });
             var create = Url.Action(nameof(Criar));
-            return Ok(new { message = "Exclu√≠da.", _links = new { collection, create } });
+            return Ok(new { message = "ExcluÌda.", _links = new { collection, create } });
         }
     }
 }

@@ -1,80 +1,79 @@
 ﻿// Program.cs
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;                 // SameSiteMode / CookieSecurePolicy
-using Microsoft.Extensions.Hosting;              // IHostEnvironment
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;             // UseOracle
-using MottuProjeto.Data;                         // AppDbContext
+using Microsoft.AspNetCore.Mvc.Authorization; // AllowAnonymousFilter
+using MottuProjeto.Data;
 using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
-builder.Services.AddControllers();
+// ===== Controllers (força todo mundo como [AllowAnonymous]) =====
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add(new AllowAnonymousFilter());
+});
 
-// Swagger + XML comments
+// ===== Swagger =====
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "MottuProjeto API",
+        Title = "MottuProjeto API (Sem Auth)",
         Version = "v1",
-        Description = "API de gestão de usuários, motos e áreas (Sprint 3)."
+        Description = "Somente Motos e Áreas. Rotas de Usuário/Auth desativadas."
     });
 
-    // Lê os comentários XML gerados pelo .csproj para descrever endpoints, params e models
     var xml = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xml);
     if (File.Exists(xmlPath))
         c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
-// DbContext (Oracle) — Connection string via appsettings ou env ORACLE_CONN
-builder.Services.AddDbContext<AppDbContext>(opt =>
+// ===== DB =====
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var conn = builder.Configuration.GetConnectionString("Default")
-               ?? Environment.GetEnvironmentVariable("ORACLE_CONN");
-    if (string.IsNullOrWhiteSpace(conn))
-        throw new InvalidOperationException(
-            "Defina ConnectionStrings:Default no appsettings ou a variável de ambiente ORACLE_CONN.");
-
-    opt.UseOracle(conn);
+    // Usa a sua chave "Default" do appsettings.json
+    var cs = builder.Configuration.GetConnectionString("Default");
+    if (!string.IsNullOrWhiteSpace(cs))
+        options.UseOracle(cs);
 });
 
-// Autenticação via Cookie
-builder.Services
-    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.Cookie.Name = "AuthCookie";
-        options.LoginPath = "/api/auth/login";
-        options.AccessDeniedPath = "/api/auth/denied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(2);
-        options.SlidingExpiration = true;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;            // ok para HTTP local
-        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // em produção (HTTPS), use Always
-    });
-
-builder.Services.AddAuthorization();
+// ===== CORS (qualquer origem, sem cookies) =====
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("OpenAll", p =>
+        p.AllowAnyOrigin()
+         .AllowAnyHeader()
+         .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
-// Swagger SEMPRE habilitado (independente do ambiente)
+// ===== Pipeline =====
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Opcional: comente se não tiver HTTPS configurado para evitar warning
-// app.UseHttpsRedirection();
+app.UseCors("OpenAll");
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Bloqueia rotas de usuário e auth (404)
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Path.StartsWithSegments("/api/usuarios") ||
+        ctx.Request.Path.StartsWithSegments("/api/auth"))
+    {
+        ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+        await ctx.Response.WriteAsync("Not Found");
+        return;
+    }
+    await next();
+});
 
+// IMPORTANTE: não usamos UseAuthentication/UseAuthorization
 app.MapControllers();
 
-// SEED opcional de admin (apenas se a base estiver vazia)
+// (Opcional) Seed silencioso — não é usado sem auth, pode remover se quiser
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -84,19 +83,16 @@ using (var scope = app.Services.CreateScope())
         {
             ctx.Usuarios.Add(new MottuProjeto.Models.Usuario
             {
-                Nome = "Administrador",
+                Nome = "Administrador do Sistema",
                 Email = "admin@example.com",
                 Username = "admin",
-                PasswordHash = "admin123", // ⚠️ Em produção, salvar HASH (ex.: BCrypt) e ajustar verificação no login
+                PasswordHash = "admin123",
                 Role = "Admin"
             });
             ctx.SaveChanges();
         }
     }
-    catch
-    {
-        // Se o DbContext não estiver configurado, ignore o seed.
-    }
+    catch { /* ignora erros de seed */ }
 }
 
 app.Run();
