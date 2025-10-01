@@ -47,7 +47,7 @@ MottuProjeto/
 
 ## 📦 Requisitos
 - [.NET SDK 8.x](https://dotnet.microsoft.com/)
-- Banco Oracle acessível
+- Ter certeza que o banco oracle esta rodando **User Id=rm555708;Password=221005;Data Source=oracle.fiap.com.br:1521/orcl"
 - Permissões de rede/firewall para acesso ao Oracle
 
 ### 1) Restaurar e compilar
