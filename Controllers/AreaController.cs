@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿// Controllers/AreaController.cs
 using Microsoft.AspNetCore.Authorization;
+=======
+﻿using Microsoft.AspNetCore.Authorization;
+>>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Data;
@@ -10,7 +14,11 @@ namespace MottuProjeto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+<<<<<<< HEAD
     [Authorize] // 🔒 JWT protege a rota (sem Policy)
+=======
+    [Authorize]
+>>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
     public class AreaController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -52,7 +60,16 @@ namespace MottuProjeto.Controllers
 
         /// <summary>Cria uma área (HATEOAS: self, update, delete).</summary>
         /// <param name="area">Dados da área.</param>
+<<<<<<< HEAD
         /// <remarks>Exemplo: { "nome": "Zona Leste" }</remarks>
+=======
+        /// <remarks>
+        /// Exemplo de payload:
+        /// {
+        ///   "nome": "Zona Leste"
+        /// }
+        /// </remarks>
+>>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
         /// <response code="201">Área criada com sucesso.</response>
         /// <response code="400">Dados inválidos.</response>
         [HttpPost]
@@ -70,8 +87,19 @@ namespace MottuProjeto.Controllers
         /// <summary>Atualiza uma área (HATEOAS: self, delete).</summary>
         /// <param name="id">Identificador da área.</param>
         /// <param name="area">Dados atualizados da área.</param>
+<<<<<<< HEAD
         /// <remarks>Exemplo: { "id": 1, "nome": "Centro" }</remarks>
         /// <response code="200">Área atualizada.</response>
+=======
+        /// <remarks>
+        /// Exemplo de payload:
+        /// {
+        ///   "id": 1,
+        ///   "nome": "Centro"
+        /// }
+        /// </remarks>
+        /// <response code="200">Área atualizada (envelope HATEOAS).</response>
+>>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
         /// <response code="400">Ids divergentes ou dados inválidos.</response>
         /// <response code="404">Área não encontrada.</response>
         [HttpPut("{id:int}")]
@@ -90,9 +118,15 @@ namespace MottuProjeto.Controllers
             return Ok(envelope);
         }
 
+<<<<<<< HEAD
         /// <summary>Exclui uma área.</summary>
         /// <param name="id">Identificador da área.</param>
         /// <response code="200">Excluída.</response>
+=======
+        /// <summary>Exclui uma área (HATEOAS: link para coleção e criação).</summary>
+        /// <param name="id">Identificador da área.</param>
+        /// <response code="200">Confirma exclusão com links para coleção/criação.</response>
+>>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
         /// <response code="404">Área não encontrada.</response>
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
