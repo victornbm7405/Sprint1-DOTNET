@@ -79,6 +79,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// Health Checks
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 // Swagger
@@ -87,6 +90,48 @@ app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Liveness: API está viva e respondendo
+app.MapGet("/healthz", () => Results.Ok(new
+{
+    status = "Healthy",
+    service = "MottuProjeto API",
+    version = "v1",
+    timestamp = DateTime.UtcNow
+}))
+.AllowAnonymous()
+.WithName("Healthz");
+
+// Readiness: API pronta (checa conexão com o banco)
+app.MapGet("/healthz/ready", async (AppDbContext db) =>
+{
+    try
+    {
+        var ok = await db.Database.CanConnectAsync();
+        return ok
+            ? Results.Ok(new
+            {
+                status = "Ready",
+                db = "Connected",
+                timestamp = DateTime.UtcNow
+            })
+            : Results.Problem(
+                statusCode: 503,
+                title: "Not Ready",
+                detail: "Database unreachable"
+            );
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            statusCode: 503,
+            title: "Not Ready",
+            detail: ex.Message
+        );
+    }
+})
+.AllowAnonymous()
+.WithName("Readiness");
 
 app.MapControllers();
 
@@ -113,3 +158,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Habilita WebApplicationFactory<Program> em testes de integração (xUnit)
+public partial class Program { }

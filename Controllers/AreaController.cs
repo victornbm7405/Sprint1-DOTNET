@@ -1,145 +1,95 @@
-<<<<<<< HEAD
-﻿// Controllers/AreaController.cs
-using Microsoft.AspNetCore.Authorization;
-=======
 ﻿using Microsoft.AspNetCore.Authorization;
->>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MottuProjeto.Data;
 using MottuProjeto.Models;
-using MottuProjeto.Infrastructure;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MottuProjeto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-<<<<<<< HEAD
-    [Authorize] // 🔒 JWT protege a rota (sem Policy)
-=======
     [Authorize]
->>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
     public class AreaController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public AreaController(AppDbContext context) => _context = context;
+        private readonly AppDbContext _ctx;
 
-        /// <summary>Lista paginada de áreas (com links de navegação).</summary>
-        /// <param name="page">Página (&gt;=1).</param>
-        /// <param name="pageSize">Itens por página (1–100).</param>
-        /// <response code="200">Retorna a página solicitada.</response>
+        public AreaController(AppDbContext ctx)
+        {
+            _ctx = ctx;
+        }
+
+        // GET: api/area
         [HttpGet]
-        public async Task<ActionResult<object>> Listar([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<Area>>> GetAll()
         {
-            if (page < 1) page = 1;
-            if (pageSize < 1 || pageSize > 100) pageSize = 10;
-
-            var query = _context.Areas.AsNoTracking().OrderBy(a => a.Id);
-            var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-
-            var self = Url.Action(nameof(Listar), values: new { page, pageSize });
-            var next = (page * pageSize < total) ? Url.Action(nameof(Listar), values: new { page = page + 1, pageSize }) : null;
-            var prev = (page > 1) ? Url.Action(nameof(Listar), values: new { page = page - 1, pageSize }) : null;
-
-            return Ok(new { total, page, pageSize, _links = new { self, next, prev }, items });
+            var list = await _ctx.Areas.AsNoTracking().ToListAsync();
+            return Ok(list);
         }
 
-        /// <summary>Obtém uma área (HATEOAS: self, update, delete).</summary>
-        /// <param name="id">Identificador da área.</param>
-        /// <response code="200">Área encontrada.</response>
-        /// <response code="404">Área não encontrada.</response>
+        // GET: api/area/5
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<object>> Obter(int id)
+        public async Task<ActionResult<Area>> GetById(int id)
         {
-            var area = await _context.Areas.FindAsync(id);
-            if (area is null) return NotFound();
-
-            return Ok(this.WithLinks(area, nameof(Obter), nameof(Atualizar), nameof(Delete), new { id }));
+            var area = await _ctx.Areas.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+            if (area == null)
+                return NotFound();
+            return Ok(area);
         }
 
-        /// <summary>Cria uma área (HATEOAS: self, update, delete).</summary>
-        /// <param name="area">Dados da área.</param>
-<<<<<<< HEAD
-        /// <remarks>Exemplo: { "nome": "Zona Leste" }</remarks>
-=======
-        /// <remarks>
-        /// Exemplo de payload:
-        /// {
-        ///   "nome": "Zona Leste"
-        /// }
-        /// </remarks>
->>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
-        /// <response code="201">Área criada com sucesso.</response>
-        /// <response code="400">Dados inválidos.</response>
+        // POST: api/area
         [HttpPost]
-        public async Task<ActionResult<object>> Criar([FromBody] Area area)
+        public async Task<ActionResult<Area>> Create([FromBody] Area area)
         {
-            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-            _context.Areas.Add(area);
-            await _context.SaveChangesAsync();
+            _ctx.Areas.Add(area);
+            await _ctx.SaveChangesAsync();
 
-            var envelope = this.WithLinks(area, nameof(Obter), nameof(Atualizar), nameof(Delete), new { id = area.Id });
-            return CreatedAtAction(nameof(Obter), new { id = area.Id }, envelope);
+            return CreatedAtAction(nameof(GetById), new { id = area.Id }, area);
         }
 
-        /// <summary>Atualiza uma área (HATEOAS: self, delete).</summary>
-        /// <param name="id">Identificador da área.</param>
-        /// <param name="area">Dados atualizados da área.</param>
-<<<<<<< HEAD
-        /// <remarks>Exemplo: { "id": 1, "nome": "Centro" }</remarks>
-        /// <response code="200">Área atualizada.</response>
-=======
-        /// <remarks>
-        /// Exemplo de payload:
-        /// {
-        ///   "id": 1,
-        ///   "nome": "Centro"
-        /// }
-        /// </remarks>
-        /// <response code="200">Área atualizada (envelope HATEOAS).</response>
->>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
-        /// <response code="400">Ids divergentes ou dados inválidos.</response>
-        /// <response code="404">Área não encontrada.</response>
+        // PUT: api/area/5
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Atualizar(int id, [FromBody] Area area)
+        public async Task<IActionResult> Update(int id, [FromBody] Area area)
         {
-            if (id != area.Id) return BadRequest("Id do recurso diverge do corpo.");
-            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            if (id != area.Id)
+                return BadRequest("Id da rota difere do corpo");
 
-            var existe = await _context.Areas.AnyAsync(a => a.Id == id);
-            if (!existe) return NotFound();
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-            _context.Entry(area).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            _ctx.Entry(area).State = EntityState.Modified;
 
-            var envelope = this.WithLinks(area, nameof(Obter), nameof(Atualizar), nameof(Delete), new { id });
-            return Ok(envelope);
+            try
+            {
+                await _ctx.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _ctx.Areas.AnyAsync(a => a.Id == id))
+                    return NotFound();
+
+                throw;
+            }
+
+            return NoContent();
         }
 
-<<<<<<< HEAD
-        /// <summary>Exclui uma área.</summary>
-        /// <param name="id">Identificador da área.</param>
-        /// <response code="200">Excluída.</response>
-=======
-        /// <summary>Exclui uma área (HATEOAS: link para coleção e criação).</summary>
-        /// <param name="id">Identificador da área.</param>
-        /// <response code="200">Confirma exclusão com links para coleção/criação.</response>
->>>>>>> abf4ab41e4f487f78868e9df21afde884fc13e52
-        /// <response code="404">Área não encontrada.</response>
+        // DELETE: api/area/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var area = await _context.Areas.FindAsync(id);
-            if (area is null) return NotFound();
+            var area = await _ctx.Areas.FindAsync(id);
+            if (area == null)
+                return NotFound();
 
-            _context.Areas.Remove(area);
-            await _context.SaveChangesAsync();
+            _ctx.Areas.Remove(area);
+            await _ctx.SaveChangesAsync();
 
-            var collection = Url.Action(nameof(Listar), new { page = 1, pageSize = 10 });
-            var create = Url.Action(nameof(Criar));
-            return Ok(new { message = "Excluída.", _links = new { collection, create } });
+            return NoContent();
         }
     }
 }
