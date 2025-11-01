@@ -7,21 +7,23 @@ using MottuProjeto.Models;
 namespace MottuProjeto.Controllers
 {
     [ApiController]
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     public class UsuariosController : ControllerBase
     {
         private readonly AppDbContext _context;
         public UsuariosController(AppDbContext context) => _context = context;
 
-        // GET: api/usuarios
+        // GET: api/usuarios  |  api/v1/usuarios
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Usuario>>> Listar()
         {
             return await _context.Usuarios.ToListAsync();
         }
 
-        // GET: api/usuarios/5
+        // GET: api/usuarios/5  |  api/v1/usuarios/5
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Usuario>> Obter(int id)
         {
@@ -30,7 +32,7 @@ namespace MottuProjeto.Controllers
             return Ok(usuario);
         }
 
-        // POST: api/usuarios
+        // POST: api/usuarios  |  api/v1/usuarios
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] Usuario usuario)
         {
@@ -39,7 +41,7 @@ namespace MottuProjeto.Controllers
             return CreatedAtAction(nameof(Obter), new { id = usuario.Id }, usuario);
         }
 
-        // PUT: api/usuarios/5
+        // PUT: api/usuarios/5  |  api/v1/usuarios/5
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Atualizar(int id, [FromBody] Usuario usuario)
         {
@@ -55,7 +57,7 @@ namespace MottuProjeto.Controllers
             return Ok(usuario);
         }
 
-        // DELETE: api/usuarios/5
+        // DELETE: api/usuarios/5  |  api/v1/usuarios/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

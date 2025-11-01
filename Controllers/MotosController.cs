@@ -9,7 +9,9 @@ using MottuProjeto.Infrastructure;
 namespace MottuProjeto.Controllers
 {
     [ApiController]
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize] // 🔒 JWT protege a rota (sem Policy)
     public class MotosController : ControllerBase
     {

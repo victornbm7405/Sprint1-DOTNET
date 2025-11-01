@@ -5,6 +5,13 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using MottuProjeto.Data;
 
+// ▼ Imports necessários para VERSIONAMENTO
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
@@ -14,13 +21,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "MottuProjeto API",
-        Version = "v1",
-        Description = "API de gestão de usuários, motos e áreas com autenticação JWT."
-    });
-
+    // ⚠️ Mantemos apenas a configuração de segurança aqui.
+    // A definição dos "SwaggerDoc" por versão será feita via ConfigureSwaggerOptions (abaixo).
     var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         Scheme = "bearer",
@@ -41,6 +43,33 @@ builder.Services.AddSwaggerGen(c =>
         { jwtSecurityScheme, Array.Empty<string>() }
     });
 });
+
+// ▼ VERSIONAMENTO DE API
+builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+
+    // Permite 3 formas de enviar versão:
+    // - Segmento na URL (/api/v{version}/...)
+    // - Header: x-api-version
+    // - QueryString: ?api-version=1.0
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("x-api-version"),
+        new QueryStringApiVersionReader("api-version")
+    );
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";        // v1, v1.1, ...
+    options.SubstituteApiVersionInUrl = true;  // substitui {version} quando presente na rota
+});
+
+// Gera Swagger por versão descoberta pelo ApiExplorer
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
 // DbContext (Oracle) — via appsettings.json ou env ORACLE_CONN
 builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -79,59 +108,30 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Health Checks
+// Health Checks (registrado; os endpoints estão no HealthController)
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 // Swagger
 app.UseSwagger();
-app.UseSwaggerUI();
+
+// UI do Swagger com suporte a múltiplas versões
+var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+app.UseSwaggerUI(options =>
+{
+    foreach (var desc in provider.ApiVersionDescriptions)
+    {
+        options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json",
+            $"MottuProjeto API {desc.GroupName.ToUpper()}");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Liveness: API está viva e respondendo
-app.MapGet("/healthz", () => Results.Ok(new
-{
-    status = "Healthy",
-    service = "MottuProjeto API",
-    version = "v1",
-    timestamp = DateTime.UtcNow
-}))
-.AllowAnonymous()
-.WithName("Healthz");
-
-// Readiness: API pronta (checa conexão com o banco)
-app.MapGet("/healthz/ready", async (AppDbContext db) =>
-{
-    try
-    {
-        var ok = await db.Database.CanConnectAsync();
-        return ok
-            ? Results.Ok(new
-            {
-                status = "Ready",
-                db = "Connected",
-                timestamp = DateTime.UtcNow
-            })
-            : Results.Problem(
-                statusCode: 503,
-                title: "Not Ready",
-                detail: "Database unreachable"
-            );
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(
-            statusCode: 503,
-            title: "Not Ready",
-            detail: ex.Message
-        );
-    }
-})
-.AllowAnonymous()
-.WithName("Readiness");
+// ⛳ Endpoints de health **removidos** daqui para aparecerem no Swagger via HealthController
+// (mantém as rotas /healthz e /healthz/ready no controller com [ApiVersionNeutral])
 
 app.MapControllers();
 
@@ -161,3 +161,27 @@ app.Run();
 
 // Habilita WebApplicationFactory<Program> em testes de integração (xUnit)
 public partial class Program { }
+
+// ▼ Classe para configurar Swagger dinamicamente por versão
+public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
+{
+    private readonly IApiVersionDescriptionProvider _provider;
+
+    public ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider)
+    {
+        _provider = provider;
+    }
+
+    public void Configure(SwaggerGenOptions options)
+    {
+        foreach (var desc in _provider.ApiVersionDescriptions)
+        {
+            options.SwaggerDoc(desc.GroupName, new OpenApiInfo
+            {
+                Title = "MottuProjeto API",
+                Version = desc.ApiVersion.ToString(),
+                Description = "API de gestão de usuários, motos e áreas com autenticação JWT, versionamento e health checks."
+            });
+        }
+    }
+}

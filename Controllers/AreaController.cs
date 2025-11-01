@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 namespace MottuProjeto.Controllers
 {
     [ApiController]
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     public class AreaController : ControllerBase
     {
@@ -20,7 +22,7 @@ namespace MottuProjeto.Controllers
             _ctx = ctx;
         }
 
-        // GET: api/area
+        // GET: api/area  |  api/v1/area
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Area>>> GetAll()
         {
@@ -28,7 +30,7 @@ namespace MottuProjeto.Controllers
             return Ok(list);
         }
 
-        // GET: api/area/5
+        // GET: api/area/5  |  api/v1/area/5
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Area>> GetById(int id)
         {
@@ -38,7 +40,7 @@ namespace MottuProjeto.Controllers
             return Ok(area);
         }
 
-        // POST: api/area
+        // POST: api/area  |  api/v1/area
         [HttpPost]
         public async Task<ActionResult<Area>> Create([FromBody] Area area)
         {
@@ -51,7 +53,7 @@ namespace MottuProjeto.Controllers
             return CreatedAtAction(nameof(GetById), new { id = area.Id }, area);
         }
 
-        // PUT: api/area/5
+        // PUT: api/area/5  |  api/v1/area/5
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] Area area)
         {
@@ -78,7 +80,7 @@ namespace MottuProjeto.Controllers
             return NoContent();
         }
 
-        // DELETE: api/area/5
+        // DELETE: api/area/5  |  api/v1/area/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
