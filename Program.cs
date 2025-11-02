@@ -17,6 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Controllers
 builder.Services.AddControllers();
 
+
+
+builder.Services.AddSingleton<MottuProjeto.ML.MotoRiskModelService>();
+builder.Services.AddSingleton<MottuProjeto.ML.TelemetryRiskService>();
 // Swagger + JWT (botão Authorize → Bearer <token>)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -185,3 +189,5 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
         }
     }
 }
+
+

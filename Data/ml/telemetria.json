@@ -1,0 +1,18 @@
+﻿[
+  { "tempC": 40, "vib": 0.10, "battPct": 90, "risco": false },
+  { "tempC": 45, "vib": 0.15, "battPct": 80, "risco": false },
+  { "tempC": 50, "vib": 0.20, "battPct": 70, "risco": false },
+  { "tempC": 55, "vib": 0.25, "battPct": 60, "risco": false },
+
+  { "tempC": 60, "vib": 0.30, "battPct": 55, "risco": true  },
+  { "tempC": 62, "vib": 0.35, "battPct": 50, "risco": true  },
+  { "tempC": 65, "vib": 0.40, "battPct": 45, "risco": true  },
+  { "tempC": 68, "vib": 0.45, "battPct": 40, "risco": true  },
+
+  { "tempC": 52, "vib": 0.55, "battPct": 85, "risco": true  },
+  { "tempC": 48, "vib": 0.60, "battPct": 88, "risco": true  },
+  { "tempC": 44, "vib": 0.18, "battPct": 18, "risco": true  },
+  { "tempC": 46, "vib": 0.22, "battPct": 22, "risco": true  },
+  { "tempC": 35, "vib": 0.08, "battPct": 95, "risco": false },
+  { "tempC": 38, "vib": 0.12, "battPct": 92, "risco": false }
+]

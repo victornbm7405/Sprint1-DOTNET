@@ -1,0 +1,18 @@
+﻿[
+  { "TempC": 40, "Vib": 0.10, "BattPct": 90, "Risco": false },
+  { "TempC": 45, "Vib": 0.15, "BattPct": 80, "Risco": false },
+  { "TempC": 50, "Vib": 0.20, "BattPct": 70, "Risco": false },
+  { "TempC": 55, "Vib": 0.25, "BattPct": 60, "Risco": false },
+
+  { "TempC": 60, "Vib": 0.30, "BattPct": 55, "Risco": true  },
+  { "TempC": 62, "Vib": 0.35, "BattPct": 50, "Risco": true  },
+  { "TempC": 65, "Vib": 0.40, "BattPct": 45, "Risco": true  },
+  { "TempC": 68, "Vib": 0.45, "BattPct": 40, "Risco": true  },
+
+  { "TempC": 52, "Vib": 0.55, "BattPct": 85, "Risco": true  },
+  { "TempC": 48, "Vib": 0.60, "BattPct": 88, "Risco": true  },
+  { "TempC": 44, "Vib": 0.18, "BattPct": 18, "Risco": true  },
+  { "TempC": 46, "Vib": 0.22, "BattPct": 22, "Risco": true  },
+  { "TempC": 35, "Vib": 0.08, "BattPct": 95, "Risco": false },
+  { "TempC": 38, "Vib": 0.12, "BattPct": 92, "Risco": false }
+]

@@ -36,6 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.ML" Version="4.0.3" />
     <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.11" />
 
     <!-- Swagger -->
@@ -44,4 +45,12 @@
     <!-- JWT primitives -->
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="data\ml\telemetria.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data\ml\motosTreino.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
+
+
