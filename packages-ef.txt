@@ -1,0 +1,7 @@
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:7:   > Microsoft.EntityFrameworkCore                        7.0.11       7.0.11   
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:8:   > Microsoft.EntityFrameworkCore.Design                 7.0.11       7.0.11   
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:9:   > Microsoft.EntityFrameworkCore.Relational             7.0.11       7.0.11   
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:10:   > Microsoft.EntityFrameworkCore.Tools                  7.0.11       7.0.11   
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:11:   > Oracle.EntityFrameworkCore                           7.21.11      7.21.11  
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:17:   > Microsoft.EntityFrameworkCore.Abstractions                 7.0.11   
+C:\Users\Modesto\Downloads\Sprint1-DOTNET-main (10)\Sprint1-DOTNET-main\packages-tree.txt:18:   > Microsoft.EntityFrameworkCore.Analyzers                    7.0.11   

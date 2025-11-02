@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+
+		<!-- Evita o AppHost nativo que antivÃ­rus costuma bloquear -->
+		<UseAppHost>false</UseAppHost>
+
+		<!-- Swagger: gerar comentÃ¡rios XML -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- Silencia avisos de falta de XML docs em APIs pÃºblicas -->
+		<NoWarn>$(NoWarn);1591</NoWarn>
+	</PropertyGroup>
+
+	<!-- NÃƒO compilar arquivos do projeto de testes dentro do projeto Web -->
+	<ItemGroup>
+		<Compile Remove="MottuProjeto.Tests\**\*.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.11" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.11" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+	</ItemGroup>
+  <ItemGroup>
+    <!-- NÃO compilar NENHUM arquivo dos projetos de teste dentro do projeto Web -->
+    <Compile Remove="MottuProjeto.UnitTests\**\*.cs"" />
+    <Compile Remove="MottuProjeto.IntegrationTests\**\*.cs"" />
+    <!-- (opcional) se já existir outra pasta de testes, mantém compatibilidade -->
+    <Compile Remove="MottuProjeto.Tests\**\*.cs"" />
+  </ItemGroup>
+</Project>
+
+
