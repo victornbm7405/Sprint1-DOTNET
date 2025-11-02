@@ -1,72 +1,107 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using Microsoft.ML;
+using Microsoft.ML.Data;
 
-namespace MottuProjeto.ML;
-
-// Serviço extremamente simples: treina 1x em memória e prediz
-public class TelemetryRiskService
+namespace MottuProjeto.ML
 {
-    private readonly MLContext _ml;
-    private readonly PredictionEngine<TelemetryTrainData, TelemetryPrediction> _engine;
-
-    public TelemetryRiskService()
+    // ---- POCOs do modelo (deixe sÃ³ aqui) ----
+    public class TelemetryInput
     {
-        _ml = new MLContext();
-
-        // Dataset mínimo embutido (exemplos fictícios só p/ funcionar)
-        var dados = new List<TelemetryTrainData>
-        {
-            new() { TempC=40, Vib=0.10f, BattPct=90, Risco=false },
-            new() { TempC=45, Vib=0.15f, BattPct=80, Risco=false },
-            new() { TempC=50, Vib=0.20f, BattPct=70, Risco=false },
-            new() { TempC=55, Vib=0.25f, BattPct=60, Risco=false },
-
-            new() { TempC=60, Vib=0.30f, BattPct=55, Risco=true },
-            new() { TempC=62, Vib=0.35f, BattPct=50, Risco=true },
-            new() { TempC=65, Vib=0.40f, BattPct=45, Risco=true },
-            new() { TempC=68, Vib=0.45f, BattPct=40, Risco=true },
-
-            new() { TempC=52, Vib=0.55f, BattPct=85, Risco=true },  // vib alta
-            new() { TempC=48, Vib=0.60f, BattPct=88, Risco=true },  // vib alta
-            new() { TempC=44, Vib=0.18f, BattPct=18, Risco=true },  // bateria baixa
-            new() { TempC=46, Vib=0.22f, BattPct=22, Risco=true },  // bateria baixa
-            new() { TempC=35, Vib=0.08f, BattPct=95, Risco=false },
-            new() { TempC=38, Vib=0.12f, BattPct=92, Risco=false }
-        };
-
-        var dataView = _ml.Data.LoadFromEnumerable(dados);
-
-        // Features: TempC, Vib, BattPct -> classificador binário
-        var pipeline = _ml.Transforms.Concatenate("Features",
-                                                  nameof(TelemetryTrainData.TempC),
-                                                  nameof(TelemetryTrainData.Vib),
-                                                  nameof(TelemetryTrainData.BattPct))
-                       .Append(_ml.BinaryClassification.Trainers.SdcaLogisticRegression());
-
-        var model = pipeline.Fit(dataView);
-
-        // PredictionEngine simples para uso direto no endpoint
-        _engine = _ml.Model.CreatePredictionEngine<TelemetryTrainData, TelemetryPrediction>(model);
+        public float TempC { get; set; }
+        public float Vib { get; set; }
+        public float BattPct { get; set; }
+        public bool Risco { get; set; } // Label no treino sintÃ©tico
     }
 
-    public (bool predicted, float probability, string nivel) Prever(TelemetryInput input)
+    public class TelemetryPrediction
     {
-        var linha = new TelemetryTrainData
+        [ColumnName("PredictedLabel")]
+        public bool Predicted { get; set; }
+        public float Probability { get; set; }
+        public float Score { get; set; }
+    }
+
+    // ---- DTOs do endpoint ----
+    public class TelemetryRequest
+    {
+        public float TempC { get; set; }
+        public float Vib { get; set; }
+        public float BattPct { get; set; }
+    }
+
+    public class TelemetryResponse
+    {
+        public float TempC { get; set; }
+        public float Vib { get; set; }
+        public float BattPct { get; set; }
+        public bool Predicted { get; set; }
+        public float Probability { get; set; }
+        public string Nivel { get; set; } = "Normal";
+    }
+
+    // ---- ServiÃ§o ML.NET ----
+    public class TelemetryRiskService
+    {
+        private readonly MLContext _ml;
+        private readonly ITransformer _model;
+
+        public TelemetryRiskService()
         {
-            TempC = input.TempC,
-            Vib = input.Vib,
-            BattPct = input.BattPct
-        };
+            _ml = new MLContext(seed: 42);
 
-        var pred = _engine.Predict(linha);
-        var p = pred.Probability;
+            var data = new List<TelemetryInput>
+            {
+                new() { TempC = 40, Vib = 0.10f, BattPct = 90, Risco = false },
+                new() { TempC = 45, Vib = 0.15f, BattPct = 80, Risco = false },
+                new() { TempC = 50, Vib = 0.20f, BattPct = 70, Risco = false },
+                new() { TempC = 55, Vib = 0.25f, BattPct = 60, Risco = false },
+                new() { TempC = 58, Vib = 0.28f, BattPct = 55, Risco = true  },
+                new() { TempC = 60, Vib = 0.30f, BattPct = 50, Risco = true  },
+                new() { TempC = 62, Vib = 0.34f, BattPct = 45, Risco = true  },
+                new() { TempC = 65, Vib = 0.38f, BattPct = 40, Risco = true  },
+                new() { TempC = 68, Vib = 0.42f, BattPct = 35, Risco = true  },
+                new() { TempC = 70, Vib = 0.45f, BattPct = 30, Risco = true  },
+            };
 
-        // Classificação de nível bem simples (funcional)
-        var nivel =
-            p < 0.33f ? "Normal" :
-            p < 0.66f ? "Alerta" :
-                        "Risco";
+            var train = _ml.Data.LoadFromEnumerable(data);
 
-        return (pred.Predicted, p, nivel);
+            var pipeline =
+                _ml.Transforms.Concatenate("Features",
+                        nameof(TelemetryInput.TempC),
+                        nameof(TelemetryInput.Vib),
+                        nameof(TelemetryInput.BattPct))
+                  .Append(_ml.Transforms.NormalizeMinMax("Features"))
+                  .Append(_ml.BinaryClassification.Trainers.SdcaLogisticRegression(
+                      labelColumnName: nameof(TelemetryInput.Risco),
+                      featureColumnName: "Features"));
+
+            _model = pipeline.Fit(train);
+        }
+
+        public TelemetryResponse Predict(TelemetryRequest req)
+        {
+            var engine = _ml.Model.CreatePredictionEngine<TelemetryInput, TelemetryPrediction>(_model);
+
+            var pred = engine.Predict(new TelemetryInput
+            {
+                TempC = req.TempC,
+                Vib = req.Vib,
+                BattPct = req.BattPct
+            });
+
+            var nivel = pred.Probability >= 0.80f ? "Risco"
+                      : pred.Probability >= 0.60f ? "Alerta"
+                      : "Normal";
+
+            return new TelemetryResponse
+            {
+                TempC = req.TempC,
+                Vib = req.Vib,
+                BattPct = req.BattPct,
+                Predicted = pred.Predicted,
+                Probability = pred.Probability,
+                Nivel = nivel
+            };
+        }
     }
 }

@@ -1,52 +1,35 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MottuProjeto.ML;
+using System.ComponentModel.DataAnnotations;
 
-namespace MottuProjeto.Controllers;
-
-[ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/ml")]
-public class MlController : ControllerBase
+namespace MottuProjeto.Controllers
 {
-    private readonly TelemetryRiskService _svc;
-
-    public MlController(TelemetryRiskService svc)
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/ml")]
+    public class MlController : ControllerBase
     {
-        _svc = svc;
-    }
+        private readonly TelemetryRiskService _service;
 
-    /// <summary>
-    /// Prediz risco de manutenção da moto a partir de telemetria (ML.NET).
-    /// </summary>
-    /// <remarks>
-    /// Exemplo:
-    /// POST /api/v1/ml/risco-manutencao
-    /// {
-    ///   "tempC": 61.5,
-    ///   "vib": 0.38,
-    ///   "battPct": 52
-    /// }
-    /// </remarks>
-    /// <response code="200">Retorna probabilidade e nível de risco</response>
-    [HttpPost("risco-manutencao")]
-    [AllowAnonymous] // deixar aberto p/ facilitar correção
-    [ProducesResponseType(typeof(object), 200)]
-    public IActionResult PreverRisco([FromBody] TelemetryInput dto)
-    {
-        if (dto is null)
-            return BadRequest(new { message = "Corpo inválido." });
-
-        var (pred, prob, nivel) = _svc.Prever(dto);
-
-        return Ok(new
+        public MlController(TelemetryRiskService service)
         {
-            tempC = dto.TempC,
-            vib = dto.Vib,
-            battPct = dto.BattPct,
-            predicted = pred,                 // true => risco
-            probability = System.Math.Round(prob, 3),
-            nivel                              // "Normal" | "Alerta" | "Risco"
-        });
+            _service = service;
+        }
+
+        /// <summary>
+        /// Prediz o risco de manutenção com base em temperatura (°C), vibração e bateria (%).
+        /// </summary>
+        [HttpPost("risco-manutencao")] // 🔄 endpoint alterado
+        [Authorize]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(TelemetryResponse), StatusCodes.Status200OK)]
+        public ActionResult<TelemetryResponse> RiscoManutencao([FromBody, Required] TelemetryRequest request)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            var result = _service.Predict(request);
+            return Ok(result);
+        }
     }
 }
